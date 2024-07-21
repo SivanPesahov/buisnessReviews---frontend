@@ -22,6 +22,7 @@ interface UserContextType {
   user: User | null | undefined;
   login: (userInfo: User) => void;
   logout: () => void;
+  fetchUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -38,22 +39,23 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const token = localStorage.getItem("token");
   const id = token ? formatJWTTokenToUser(token) : null;
 
-  useEffect(() => {
+  const fetchUser = async () => {
     if (!token || !id) {
-      return; // Skip fetching if there's no token or userId
+      return setUser(null);
     }
-    const fetchUser = async () => {
-      try {
-        const response = await api.get<{ user: User }>(`/auth/user/${id}`);
-        setUser(response.data.user);
-      } catch (error) {
-        console.error("Failed to fetch user data", error);
-        if (error instanceof AxiosError && error.response?.status === 401) {
-          // Token might be invalid or expired
-          logout();
-        }
+    try {
+      const response = await api.get<{ user: User }>(`/Auth/me${id}`);
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Failed to fetch user data", error);
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        // Token might be invalid or expired
+        logout();
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [id, token]);
 
@@ -69,7 +71,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ user, login, logout, fetchUser }}>
       {children}
     </UserContext.Provider>
   );
