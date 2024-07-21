@@ -1,9 +1,11 @@
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/services/api.service";
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 interface IBusiness {
   _id: string;
-  title: string;
+  name: string;
   description: string;
 }
 
@@ -30,9 +32,15 @@ function BusinessesPage() {
     <ul>
       {businesses.map((business: IBusiness) => {
         return (
-          <li key={business._id}>
-            {business.title} - {business.description}
-          </li>
+          
+          <Link to={`/businesses/${business._id}`}>
+          <Card className="w-[350px]" >
+            <CardHeader>
+              <CardTitle>{business.name}</CardTitle>
+              <CardDescription>{business.description}</CardDescription>
+            </CardHeader>
+          </Card>
+          </Link>
         );
       })}
     </ul>
