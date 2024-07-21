@@ -15,17 +15,27 @@ interface IReviwes {
   user: string;
   likes: string[];
 }
+interface IBusiness {
+  _id: string;
+  name: string;
+  description: string;
+  stars:Number[]
+}
 
 function BusinessesDetailsPage() {
   const { businessesId } = useParams<{ businessesId: string }>();
+  const [business, setBusiness] = useState<IBusiness[]>([]);
+
   const [reviews, setReviews] = useState<IReviwes[]>([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const userId = '669c02b13181b71095591025';
 
   useEffect(() => {
-    async function getBusinesses() {
+    async function getReviews() {
       try {
+        const businessResponse = await api.get(`/Business/businesses/${businessesId}`);
+        setBusiness(businessResponse.data);
         const response = await api.get(`/Reviews/${businessesId}`);
         setReviews(response.data);
       } catch (err: any) {
@@ -34,13 +44,32 @@ function BusinessesDetailsPage() {
         setLoading(false);
       }
     }
-    getBusinesses();
+    getReviews();
   }, [businessesId]);
-
+  
+  
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  
   return (
+    <>
+    <Card className="w-[350px]" >
+            <CardHeader>
+              <CardTitle>{business.name}</CardTitle>
+              <CardDescription>{business.description}</CardDescription>
+            </CardHeader>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: 5 }, (_, index) => (
+                <Star
+                  key={index}
+                  size={20}
+                  color='black'
+                  fill={index < 3?'black': 'white'}
+                />
+              ))}
+            </div>
+          </Card>
     <ul>
       {reviews.map((review) => (
         <Card key={review._id} className="w-[350px]" id={review._id}>
@@ -66,6 +95,8 @@ function BusinessesDetailsPage() {
         </Card>
       ))}
     </ul>
+      <button>leave a comment</button>
+    </>
   );
 }
 
