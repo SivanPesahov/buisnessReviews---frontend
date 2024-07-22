@@ -14,7 +14,6 @@ import { Button } from "./ui/button";
 
 import { BriefcaseBusinessIcon, Menu, X } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
-import { ClipboardList, Menu, X } from "lucide-react";
 // import { useUserContext } from "./AuthProvider";
 import { useAuth } from "../components/AuthProvider";
 function Header() {
@@ -70,7 +69,7 @@ function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Avatar className="h-8 w-8 bg-purple-200 dark:bg-purple-700 ring-2 ring-white">
-                <AvatarImage alt={user.username} />
+                <AvatarImage alt={loggedInUser.username as string} />
                 <AvatarFallback className="text-purple-500 dark:text-purple-300">
                   {loggedInUser.firstName && loggedInUser.firstName[0].toUpperCase()}
                   {loggedInUser.lastName && loggedInUser.lastName[0].toUpperCase()}
