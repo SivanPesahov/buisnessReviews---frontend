@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { ClipboardList, Menu, X } from "lucide-react";
-import { useUserContext } from "./AuthProvider";
-
+// import { useUserContext } from "./AuthProvider";
+import { useAuth } from "../components/AuthProvider";
 function Header() {
-  const { user, logout } = useUserContext();
+  const { loggedInUser, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   const toggleMenu = () => {
@@ -41,16 +41,18 @@ function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-1">
-          {user === undefined ? (
+          {loggedInUser === undefined ? (
             <Link to="/auth/login">Login</Link>
-          ) : user ? (
+          ) : loggedInUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar className="h-8 w-8 dark:bg-white/5 bg-slate-300">
-                  <AvatarImage alt={user.username} />
+                  {/* <AvatarImage alt={loggedInUser!.username} /> */}
                   <AvatarFallback>
-                    {user.firstName && user.firstName[0].toUpperCase()}
-                    {user.lastName && user.lastName[0].toUpperCase()}
+                    {loggedInUser!.firstName &&
+                      loggedInUser!.firstName[0].toUpperCase()}
+                    {loggedInUser!.lastName &&
+                      loggedInUser!.lastName[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>

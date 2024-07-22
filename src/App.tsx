@@ -7,23 +7,23 @@ import NotFoundPage from "./pages/NotFoundPage";
 import MainLayout from "./components/MainLayout";
 import AuthLayout from "./components/AuthLayout";
 import LoginPage from "./pages/LoginPage";
-import { useEffect, useState } from "react";
+
 import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
-import { UserProvider, useUserContext } from "./components/AuthProvider";
+import { AuthProvider, useAuth } from "./components/AuthProvider";
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user } = useUserContext();
+  const { loggedInUser } = useAuth();
 
-  if (user === undefined) {
+  if (loggedInUser === undefined) {
     return null;
   }
 
-  if (user === null) {
+  if (loggedInUser === null) {
     return <Navigate to="/auth/login" />;
   }
 
@@ -33,7 +33,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 function App() {
   return (
     <>
-      <UserProvider>
+      <AuthProvider>
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
@@ -54,7 +54,7 @@ function App() {
           </Route>
           <Route path="*/" element={<NotFoundPage />} />
         </Routes>
-      </UserProvider>
+      </AuthProvider>
     </>
   );
 }
