@@ -1,18 +1,30 @@
+
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
-  CardDescription,
+  CardContent,
+  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/services/api.service";
+
+import { Heart, Star } from "lucide-react";
+
+interface IReview {
+
 import { Heart, Pencil, Star, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 interface IReviews {
+
   stars: number;
   _id: string;
   content: string;
@@ -20,36 +32,54 @@ interface IReviews {
   user: string;
   likes: string[];
 }
+
 interface IBusiness {
   _id: string;
   name: string;
   description: string;
   stars: number[];
+  imageUrl: string; // Make sure to add this property if it's available in your API
 }
 
 function BusinessesDetailsPage() {
   const { businessesId } = useParams<{ businessesId: string }>();
   const [business, setBusiness] = useState<IBusiness | null>(null);
+
+
   const [reviews, setReviews] = useState<IReviews[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const userId = "669e057f20ab374aca10b4f5";
 
+
   useEffect(() => {
-    async function getReviews() {
+    async function getBusinessAndReviews() {
       try {
+
+        const [businessResponse, reviewsResponse] = await Promise.all([
+          api.get(`/Business/${businessesId}`),
+          api.get(`/Reviews/${businessesId}`),
+        ]);
+
         const businessResponse = await api.get(`/Business/${businessesId}`);
+
         setBusiness(businessResponse.data);
-        const response = await api.get(`/Reviews/${businessesId}`);
-        setReviews(response.data);
+        setReviews(reviewsResponse.data);
       } catch (err: any) {
         setError(err.response ? err.response.data.message : err.message);
       } finally {
         setLoading(false);
       }
     }
-    getReviews();
+    getBusinessAndReviews();
   }, [businessesId]);
+
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (error)
+    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
+  if (!business)
+    return <div className="text-center py-10">Business not found</div>;
 
   const [hoveredStars, setHoveredStars] = useState<number>(0);
   const [selectedStars, setSelectedStars] = useState<number>(0);
@@ -99,29 +129,43 @@ function BusinessesDetailsPage() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+
   const averageStars = business!.stars.reduce((acc, cur) => acc + cur, 0) / business!.stars.length;
 
   return (
-    <>
-      {/* Business details */}
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>{business!.name}</CardTitle>
-          <CardDescription>{business!.description}</CardDescription>
-        </CardHeader>
+
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 py-8 bg-gray-100 dark:bg-gray-900 min-h-screen"
+    >
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="mb-8">
+        <img
+          src={business.imageUrl || "https://via.placeholder.com/1200x300"}
+          alt={business.name}
+          className="w-full h-[300px] object-cover rounded-lg shadow-lg mb-4"
+        />
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-2 text-blue-900 dark:text-blue-300">
+            {business.name}
+          </h1>
+          <p className="text-gray-700 dark:text-gray-400">
+            {business.description}
+          </p>
+        </div>
         <div className="flex items-center space-x-1">
           {Array.from({ length: 5 }, (_, index) => (
             <Star
               key={index}
               size={20}
-              color="black"
-              fill={index < averageStars ? 'black' : 'white'}
+              color="grey"
+              fill={index < averageStars ? 'yellow' : ''}
             />
           ))}
         </div>
-      </Card>
-
-      {/* Leave comment */}
+      </motion.div>
+      
       <Card className="w-[350px]">
         <CardHeader>
           <div className="flex items-center space-x-1">
@@ -149,37 +193,72 @@ function BusinessesDetailsPage() {
         </div>
       </Card>
 
-      {/* Comments list */}
-      <ul>
-        {reviews.map((review) => (
-          <Card key={review._id} className="w-[350px]" id={review._id}>
-            <CardHeader>
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <Star
-                    key={index}
-                    size={20}
-                    color="black"
-                    fill={index < review.stars ? "black" : "white"}
-                  />
-                ))}
-              </div>
-              <CardTitle>{review.content}</CardTitle>
-              <CardDescription className="flex items-center space-x-1">
-                <span>{review.likes.length}</span>
-                <Heart
-                  size={20}
-                  color="black"
-                  fill={review.likes.includes(userId) ? "black" : "white"}
-                  onClick={()=>handleLike(review,userId)}
+      <motion.h2
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-400"
+      >
+        Reviews
+      </motion.h2>
+
+      <div className="space-y-4">
+        {reviews.map((review, index) => (
+          <motion.div
+            key={review._id}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 * index }}
+          >
+            <Card className="overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white dark:bg-gray-800 transform hover:scale-105">
+              <CardHeader className="pb-2">
+                <div className="flex justify-center">
+                  {Array.from({ length: 5 }, (_, index) => (
+                    <Star
+                      key={index}
+                      size={20}
+                      className={
+                        index < review.stars
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
+                      }
+                    />
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {review.content}
+                </p>
+              </CardContent>
+              <CardFooter className="flex justify-end items-center pt-2">
+                <div className="flex items-center space-x-1 text-gray-500">
+                  <span>{review.likes.length}</span>
+                  <Heart
+                    size={16}
+                    className={
+                      review.likes.includes(userId)
+                        ? "text-red-500 fill-current"
+                        : "text-gray-400"
+                    onClick={()=>handleLike(review,userId)}
                 />
                 {review.user==userId?<><Pencil onClick={()=>handleEdit(review)} /> <Trash2 onClick={()=>handleDelete(review._id)}/></>:<></>}
-              </CardDescription>
-            </CardHeader>
-          </Card>
+                </div>
+              </CardFooter>
+            </Card>
+          </motion.div>
         ))}
-      </ul>
-    </>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="mt-6 bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-lg transition-colors duration-300"
+      >
+        Leave a comment
+      </motion.button>
+    </motion.div>
+
   );
 }
 
