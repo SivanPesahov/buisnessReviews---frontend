@@ -8,7 +8,7 @@ interface IBusiness {
   _id: string;
   name: string;
   description: string;
-  stars:Number[]
+  stars:number[]
 }
 
 function BusinessesPage() {
@@ -43,11 +43,12 @@ function BusinessesPage() {
             <div className="flex items-center space-x-1">
               {Array.from({ length: 5 }, (_, index) => (
                 <Star
-                  key={index}
-                  size={20}
-                  color='black'
-                  fill={index < 3?'black': 'white'}
-                />
+                key={index}
+                size={20}
+                color="black" 
+                fill={index < (business.stars.reduce((acc:number, cur) => acc + cur, 0) / business.stars.length)-1 ? 'black' : 'white'}
+              />
+              
               ))}
             </div>
           </Link>

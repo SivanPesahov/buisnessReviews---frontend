@@ -29,7 +29,7 @@ interface IBusiness {
 
 function BusinessesDetailsPage() {
   const { businessesId } = useParams<{ businessesId: string }>();
-  const [business, setBusiness] = useState<IBusiness[]>([]);
+  const [business, setBusiness] = useState<IBusiness | null>(null);
 
   const [reviews, setReviews] = useState<IReviwes[]>([]);
   const [error, setError] = useState(null);
@@ -40,10 +40,12 @@ function BusinessesDetailsPage() {
     async function getReviews() {
       try {
         const businessResponse = await api.get(
-          `/Business/businesses/${businessesId}`
+          `/Business/${businessesId}`
         );
         setBusiness(businessResponse.data);
         const response = await api.get(`/Reviews/${businessesId}`);
+        console.log(response);
+        
         setReviews(response.data);
       } catch (err: any) {
         setError(err.response ? err.response.data.message : err.message);
@@ -61,8 +63,8 @@ function BusinessesDetailsPage() {
     <>
       <Card className="w-[350px]">
         <CardHeader>
-          <CardTitle>{business.name}</CardTitle>
-          <CardDescription>{business.description}</CardDescription>
+          <CardTitle>{business!.name}</CardTitle>
+          <CardDescription>{business!.description}</CardDescription>
         </CardHeader>
         <div className="flex items-center space-x-1">
           {Array.from({ length: 5 }, (_, index) => (
@@ -70,7 +72,8 @@ function BusinessesDetailsPage() {
               key={index}
               size={20}
               color="black"
-              fill={index < 3 ? "black" : "white"}
+              fill={index < (business!.stars.reduce((acc:number, cur) => acc + cur, 0) / business!.stars.length)-1 ? 'black' : 'white'}
+
             />
           ))}
         </div>
