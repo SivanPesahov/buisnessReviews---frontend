@@ -1,4 +1,5 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import { useContext, useEffect, useRef } from "react";
+
 import {
   Card,
   CardContent,
@@ -10,116 +11,105 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { CircleFadingPlus } from "lucide-react";
-import api from "../services/api.service"; // Import your API service
+import { LogIn } from "lucide-react";
+import { useAuth } from "../components/AuthProvider";
+import { useToast } from "@/components/ui/use-toast";
+import { log } from "console";
 
-const RegisterPage: React.FC = () => {
-  const [username, setUsername] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const navigate = useNavigate(); // Initialize useNavigate
+function RegisterPage() {
+  const { register, loggedInUser } = useAuth();
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const eMailRef = useRef<HTMLInputElement>(null);
 
-  const handleInputChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setter(e.target.value);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loggedInUser) {
+      navigate("/businesses", { replace: true });
+    } else {
+      console.log("Error registering");
+      console.log(
+        "Registration failed, please check your details and try again"
+      );
+    }
+  }, [loggedInUser]);
+
+  async function handleRegister(ev: React.FormEvent<HTMLFormElement>) {
+    ev.preventDefault();
+
+    const userData = {
+      username: usernameRef.current!.value,
+      password: passwordRef.current!.value,
+      firstName: firstNameRef.current!.value,
+      lastName: lastNameRef.current!.value,
+      email: eMailRef.current!.value,
     };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
     try {
-      const response = await api.post("/auth/register", {
-        username,
-        email,
-        password,
-        firstName,
-        lastName,
-      });
+      await register(userData);
+      console.log("aaa" + loggedInUser);
+    } catch (err: any) {
+      console.log("TypeError");
+      console.log("Something went wrong... please try again");
 
-      const { token } = response.data;
-      localStorage.setItem("token", token);
-
-      navigate("/auth/login");
-    } catch (error: any) {
-      console.error(
-        "Registration failed:",
-        error.response ? error.response.data.message : error.message
-      );
-      // Handle error state or display error message
+      console.log(err.name);
     }
-  };
+  }
 
   return (
-    <Card className="shadow-2xl">
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <span>Register</span> <CircleFadingPlus />
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <div>
-            <Label>Username:</Label>
-            <Input
-              name="username"
-              placeholder="Enter username..."
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Email:</Label>
-            <Input
-              name="email"
-              type="email"
-              placeholder="Enter email..."
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Password:</Label>
-            <Input
-              name="password"
-              type="password"
-              placeholder="Enter password..."
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>First name:</Label>
-            <Input
-              name="firstName"
-              placeholder="Enter first name..."
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Last name:</Label>
-            <Input
-              name="lastName"
-              placeholder="Enter last name..."
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
-          <Button type="submit">Register</Button>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <p className="text-xs">
-          Already have an account?{" "}
-          <Link className="underline font-bold" to="/auth/login">
-            Login
-          </Link>
-        </p>
-      </CardFooter>
-    </Card>
+    <div className="flex justify-center items-center min-h-screen">
+      <Card className="shadow-2xl ">
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>Register</span> <LogIn />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4" onSubmit={handleRegister}>
+            <div>
+              <Label>Username:</Label>
+              <Input ref={usernameRef} placeholder="Enter username..." />
+            </div>
+            <div>
+              <Label>Password:</Label>
+              <Input
+                ref={passwordRef}
+                type="password"
+                placeholder="Enter password..."
+              />
+            </div>
+            <div>
+              <Label>First name:</Label>
+              <Input ref={firstNameRef} placeholder="Enter first name..." />
+            </div>
+            <div>
+              <Label>Last name:</Label>
+              <Input ref={lastNameRef} placeholder="Enter last name..." />
+            </div>
+            <div>
+              <Label>EMail:</Label>
+              <Input ref={eMailRef} placeholder="Enter last name..." />
+            </div>
+
+            <Button type="submit" className="bg-sky-900">
+              Register
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter>
+          <p className="text-xs">
+            Already have an account?{" "}
+            <Link className="underline font-bold text-sky-900" to="/auth/login">
+              Login
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   );
-};
+}
 
 export default RegisterPage;
