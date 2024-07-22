@@ -28,7 +28,7 @@ function Header() {
           <div>
             <Link className="text-primary uppercase font-bold text-xl" to="/">
               <div className="flex justify-between items-center gap-1">
-                <p>easy.</p>
+                <p>Showbiz</p>
               </div>
             </Link>
           </div>
