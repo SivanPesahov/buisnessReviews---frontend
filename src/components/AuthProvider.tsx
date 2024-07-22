@@ -82,5 +82,5 @@ export function useUserContext(): UserContextType {
   if (context === null) {
     throw new Error("This context should be used only inside UserProvider");
   }
-  return context;
+  return context;
 }
