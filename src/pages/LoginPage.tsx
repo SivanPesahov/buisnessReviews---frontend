@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Card,
   CardContent,
@@ -10,10 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { SendHorizontal } from "lucide-react";
 import { useUserContext } from "../components/AuthProvider";
 import api from "../services/api.service";
 import axios from "axios";
+import { Send } from "lucide-react";
 
 // Define the User interface with all necessary fields
 interface User {
@@ -45,7 +46,7 @@ function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await api.post<LoginResponse>("/auth/login", {
+      const response = await api.post<LoginResponse>("/Auth/login", {
         email,
         password,
       });
@@ -75,62 +76,71 @@ function LoginPage() {
   };
 
   return (
-    <Card className="max-w-md mx-auto p-8 shadow-lg rounded-lg">
-      <CardHeader className="mb-6">
-        <CardTitle className="flex justify-between items-center text-2xl font-semibold">
-          <span>Login</span> <SendHorizontal />
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email" className="text-lg font-medium">
-              Email:
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter email..."
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)
-              }
-              className="p-3 border rounded-md"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password" className="text-lg font-medium">
-              Password:
-            </Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter password..."
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setPassword(e.target.value)
-              }
-              className="p-3 border rounded-md"
-              required
-            />
-          </div>
-          <Button type="submit" className="py-3 mt-4 rounded-md">
-            Login
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="mt-6 text-center">
-        <p className="text-sm">
-          Don't have an account?{" "}
-          <Link className="underline font-semibold" to="/auth/register">
-            Register
-          </Link>
-        </p>
-      </CardFooter>
-    </Card>
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 py-8 bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center"
+    >
+      <Card className="max-w-md mx-auto p-8 shadow-lg rounded-lg bg-white dark:bg-gray-800">
+        <CardHeader className="mb-6">
+          <CardTitle className="flex justify-between items-center text-2xl font-semibold text-blue-900 dark:text-blue-300">
+            <span>Login</span> <Send />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email" className="text-lg font-medium">
+                Email:
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter email..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="p-3 border rounded-md dark:bg-gray-700 dark:text-white"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password" className="text-lg font-medium">
+                Password:
+              </Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="p-3 border rounded-md dark:bg-gray-700 dark:text-white"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              className="py-3 mt-4 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300"
+            >
+              Login
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="mt-6 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Don't have an account?{" "}
+            <Link
+              className="underline font-semibold text-blue-600 dark:text-blue-400"
+              to="/auth/register"
+            >
+              Register
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }
 
