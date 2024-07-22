@@ -85,7 +85,7 @@ function RegisterPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          <form className="flex flex-col gap-6" onSubmit={handleRegister}>
             <div className="flex items-center gap-2 border border-gray-300 rounded-md p-2 dark:border-gray-700">
               <User size={20} className="text-gray-500 dark:text-gray-400" />
               <Input 

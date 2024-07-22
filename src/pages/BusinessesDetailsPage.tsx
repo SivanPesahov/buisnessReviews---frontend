@@ -1,8 +1,7 @@
-
-import { useEffect, useState } from "react";
+import { Heart, Pencil, Star, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 
@@ -14,14 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/services/api.service";
-
-import { Heart, Star } from "lucide-react";
-
-interface IReview {
-
-import { Heart, Pencil, Star, Trash2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 
 interface IReviews {
 
@@ -61,7 +52,6 @@ function BusinessesDetailsPage() {
           api.get(`/Reviews/${businessesId}`),
         ]);
 
-        const businessResponse = await api.get(`/Business/${businessesId}`);
 
         setBusiness(businessResponse.data);
         setReviews(reviewsResponse.data);
@@ -239,7 +229,7 @@ function BusinessesDetailsPage() {
                     className={
                       review.likes.includes(userId)
                         ? "text-red-500 fill-current"
-                        : "text-gray-400"
+                        : "text-gray-400"}
                     onClick={()=>handleLike(review,userId)}
                 />
                 {review.user==userId?<><Pencil onClick={()=>handleEdit(review)} /> <Trash2 onClick={()=>handleDelete(review._id)}/></>:<></>}
