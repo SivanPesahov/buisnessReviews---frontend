@@ -37,6 +37,9 @@ function BusinessesDetailsPage() {
   const [business, setBusiness] = useState<IBusiness | null>(null);
 
 
+  const [hoveredStars, setHoveredStars] = useState<number>(0);
+  const [selectedStars, setSelectedStars] = useState<number>(0);
+  const [message, setMessage] = useState<string>("");
   const [reviews, setReviews] = useState<IReviews[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -71,9 +74,6 @@ function BusinessesDetailsPage() {
   if (!business)
     return <div className="text-center py-10">Business not found</div>;
 
-  const [hoveredStars, setHoveredStars] = useState<number>(0);
-  const [selectedStars, setSelectedStars] = useState<number>(0);
-  const [message, setMessage] = useState<string>("");
 
   const handleMouseEnter = (index: number) => {
     setHoveredStars(index + 1);
@@ -240,13 +240,7 @@ function BusinessesDetailsPage() {
         ))}
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="mt-6 bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-lg transition-colors duration-300"
-      >
-        Leave a comment
-      </motion.button>
+    
     </motion.div>
 
   );
