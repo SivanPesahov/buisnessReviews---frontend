@@ -1,16 +1,30 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+
+import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import api from "@/services/api.service";
+
 import { Heart, Star } from "lucide-react";
 
 interface IReview {
+
+import { Heart, Pencil, Star, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+interface IReviews {
+
   stars: number;
   _id: string;
   content: string;
@@ -30,18 +44,25 @@ interface IBusiness {
 function BusinessesDetailsPage() {
   const { businessesId } = useParams<{ businessesId: string }>();
   const [business, setBusiness] = useState<IBusiness | null>(null);
-  const [reviews, setReviews] = useState<IReview[]>([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const userId = "669c02b13181b71095591025";
+
+
+  const [reviews, setReviews] = useState<IReviews[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const userId = "669e057f20ab374aca10b4f5";
+
 
   useEffect(() => {
     async function getBusinessAndReviews() {
       try {
+
         const [businessResponse, reviewsResponse] = await Promise.all([
           api.get(`/Business/${businessesId}`),
           api.get(`/Reviews/${businessesId}`),
         ]);
+
+        const businessResponse = await api.get(`/Business/${businessesId}`);
+
         setBusiness(businessResponse.data);
         setReviews(reviewsResponse.data);
       } catch (err: any) {
@@ -53,13 +74,66 @@ function BusinessesDetailsPage() {
     getBusinessAndReviews();
   }, [businessesId]);
 
+
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (error)
     return <div className="text-center py-10 text-red-500">Error: {error}</div>;
   if (!business)
     return <div className="text-center py-10">Business not found</div>;
 
+  const [hoveredStars, setHoveredStars] = useState<number>(0);
+  const [selectedStars, setSelectedStars] = useState<number>(0);
+  const [message, setMessage] = useState<string>("");
+
+  const handleMouseEnter = (index: number) => {
+    setHoveredStars(index + 1);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredStars(0);
+  };
+
+  const handleClick = (index: number) => {
+    setSelectedStars(index + 1);
+  };
+
+  const handleMessageChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(event.target.value);
+  };
+
+  const handleSubmit = async () => {
+    console.log(message);
+    console.log(selectedStars);
+    
+    try {
+      await api.post("/Reviews", {
+        content: message,
+        stars: selectedStars,
+        business: businessesId,
+        user: userId,
+      });
+    } catch (error) {
+      console.error("Error submitting review:", error);
+    }
+  };
+  function handleLike(review:IReviews, userId: string) {
+   console.log(review.likes.includes(userId)?'dislike' : 'like');
+  }
+  function handleDelete(id:string) {
+    // delete by id
+  }
+  function handleEdit(review:IReviews) {
+    // edit review
+  }
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+
+  const averageStars = business!.stars.reduce((acc, cur) => acc + cur, 0) / business!.stars.length;
+
   return (
+
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -80,7 +154,44 @@ function BusinessesDetailsPage() {
             {business.description}
           </p>
         </div>
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: 5 }, (_, index) => (
+            <Star
+              key={index}
+              size={20}
+              color="grey"
+              fill={index < averageStars ? 'yellow' : ''}
+            />
+          ))}
+        </div>
       </motion.div>
+      
+      <Card className="w-[350px]">
+        <CardHeader>
+          <div className="flex items-center space-x-1">
+            {Array.from({ length: 5 }, (_, index) => (
+              <Star
+                key={index}
+                size={20}
+                color="black"
+                fill={index < (hoveredStars || selectedStars) ? "black" : "white"}
+                onMouseEnter={() => handleMouseEnter(index)}
+                onMouseLeave={handleMouseLeave}
+                onClick={() => handleClick(index)}
+                style={{ cursor: "pointer" }}
+              />
+            ))}
+          </div>
+        </CardHeader>
+        <div className="grid w-full gap-2">
+          <Textarea
+            placeholder="Type your message here."
+            value={message}
+            onChange={handleMessageChange}
+          />
+          <Button onClick={handleSubmit}>Send message</Button>
+        </div>
+      </Card>
 
       <motion.h2
         initial={{ opacity: 0 }}
@@ -129,8 +240,9 @@ function BusinessesDetailsPage() {
                       review.likes.includes(userId)
                         ? "text-red-500 fill-current"
                         : "text-gray-400"
-                    }
-                  />
+                    onClick={()=>handleLike(review,userId)}
+                />
+                {review.user==userId?<><Pencil onClick={()=>handleEdit(review)} /> <Trash2 onClick={()=>handleDelete(review._id)}/></>:<></>}
                 </div>
               </CardFooter>
             </Card>
@@ -146,6 +258,7 @@ function BusinessesDetailsPage() {
         Leave a comment
       </motion.button>
     </motion.div>
+
   );
 }
 

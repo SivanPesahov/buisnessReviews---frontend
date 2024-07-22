@@ -11,12 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { BriefcaseBusinessIcon, Menu, X } from "lucide-react";
-import { useUserContext } from "./AuthProvider";
-import { ModeToggle } from "./mode-toggle";
 
+import { BriefcaseBusinessIcon, Menu, X } from "lucide-react";
+import { ModeToggle } from "./mode-toggle";
+import { ClipboardList, Menu, X } from "lucide-react";
+// import { useUserContext } from "./AuthProvider";
+import { useAuth } from "../components/AuthProvider";
 function Header() {
-  const { user, logout } = useUserContext();
+  const { loggedInUser, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   const toggleMenu = () => {
@@ -42,6 +44,7 @@ function Header() {
             </motion.div>
           </Link>
         </div>
+
         <nav className="hidden md:block">
           <ul className="flex gap-6">
             <li>
@@ -56,21 +59,21 @@ function Header() {
         </nav>
       </div>
       <div className="flex items-center gap-4">
-        {user === undefined ? (
+        {loggedInUser === undefined ? (
           <Link
             to="/auth/login"
             className="text-white hover:text-amber-300 transition-colors duration-200"
           >
             Login
           </Link>
-        ) : user ? (
+        ) : loggedInUser ? (
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Avatar className="h-8 w-8 bg-purple-200 dark:bg-purple-700 ring-2 ring-white">
                 <AvatarImage alt={user.username} />
                 <AvatarFallback className="text-purple-500 dark:text-purple-300">
-                  {user.firstName && user.firstName[0].toUpperCase()}
-                  {user.lastName && user.lastName[0].toUpperCase()}
+                  {loggedInUser.firstName && loggedInUser.firstName[0].toUpperCase()}
+                  {loggedInUser.lastName && loggedInUser.lastName[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
@@ -109,6 +112,7 @@ function Header() {
         <button onClick={toggleMenu} className="text-white">
           {menuOpen ? (
             <X className="text-2xl" />
+
           ) : (
             <Menu className="text-2xl" />
           )}

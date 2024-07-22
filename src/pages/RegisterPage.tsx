@@ -1,5 +1,7 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
 import { motion } from "framer-motion";
+import { useContext, useEffect, useRef } from "react";
+
+
 import {
   Card,
   CardContent,
@@ -11,48 +13,61 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
+
 import { CircleFadingPlus, User, Mail, Lock, UserPlus } from "lucide-react";
 import api from "../services/api.service"; // Import your API service
 
-const RegisterPage: React.FC = () => {
-  const [username, setUsername] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const navigate = useNavigate(); // Initialize useNavigate
+import { LogIn } from "lucide-react";
+import { useAuth } from "../components/AuthProvider";
 
-  const handleInputChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setter(e.target.value);
+
+
+function RegisterPage() {
+  const { register, loggedInUser } = useAuth();
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const eMailRef = useRef<HTMLInputElement>(null);
+
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (loggedInUser) {
+      navigate("/businesses", { replace: true });
+    } else {
+      console.log("Error registering");
+      console.log(
+        "Registration failed, please check your details and try again"
+      );
+    }
+  }, [loggedInUser]);
+
+  async function handleRegister(ev: React.FormEvent<HTMLFormElement>) {
+    ev.preventDefault();
+
+    const userData = {
+      username: usernameRef.current!.value,
+      password: passwordRef.current!.value,
+      firstName: firstNameRef.current!.value,
+      lastName: lastNameRef.current!.value,
+      email: eMailRef.current!.value,
     };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
     try {
-      const response = await api.post("/auth/register", {
-        username,
-        email,
-        password,
-        firstName,
-        lastName,
-      });
+      await register(userData);
+      console.log("aaa" + loggedInUser);
+    } catch (err: any) {
+      console.log("TypeError");
+      console.log("Something went wrong... please try again");
 
-      const { token } = response.data;
-      localStorage.setItem("token", token);
-
-      navigate("/auth/login");
-    } catch (error: any) {
-      console.error(
-        "Registration failed:",
-        error.response ? error.response.data.message : error.message
-      );
-      // Handle error state or display error message
+      console.log(err.name);
     }
-  };
+  }
 
   return (
+
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
@@ -73,37 +88,27 @@ const RegisterPage: React.FC = () => {
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex items-center gap-2 border border-gray-300 rounded-md p-2 dark:border-gray-700">
               <User size={20} className="text-gray-500 dark:text-gray-400" />
-              <Input
-                name="username"
+              <Input 
+                ref={usernameRef}
                 placeholder="Enter username..."
-                value={username}
-                onChange={handleInputChange(setUsername)}
                 className="flex-1 p-3 bg-transparent border-none dark:bg-gray-700 dark:text-white"
-                required
               />
             </div>
             <div className="flex items-center gap-2 border border-gray-300 rounded-md p-2 dark:border-gray-700">
               <Mail size={20} className="text-gray-500 dark:text-gray-400" />
               <Input
-                name="email"
-                type="email"
+                ref={eMailRef}
                 placeholder="Enter email..."
-                value={email}
-                onChange={handleInputChange(setEmail)}
                 className="flex-1 p-3 bg-transparent border-none dark:bg-gray-700 dark:text-white"
-                required
+            
               />
             </div>
             <div className="flex items-center gap-2 border border-gray-300 rounded-md p-2 dark:border-gray-700">
               <Lock size={20} className="text-gray-500 dark:text-gray-400" />
               <Input
-                name="password"
-                type="password"
-                placeholder="Enter password..."
-                value={password}
-                onChange={handleInputChange(setPassword)}
+                ref={passwordRef}
+                placeholder="Enter password..."  
                 className="flex-1 p-3 bg-transparent border-none dark:bg-gray-700 dark:text-white"
-                required
               />
             </div>
             <div className="flex items-center gap-2 border border-gray-300 rounded-md p-2 dark:border-gray-700">
@@ -112,12 +117,10 @@ const RegisterPage: React.FC = () => {
                 className="text-gray-500 dark:text-gray-400"
               />
               <Input
-                name="firstName"
-                placeholder="Enter first name..."
-                value={firstName}
-                onChange={handleInputChange(setFirstName)}
+                ref={firstNameRef}
+                placeholder="Enter first name..." 
                 className="flex-1 p-3 bg-transparent border-none dark:bg-gray-700 dark:text-white"
-                required
+
               />
             </div>
             <div className="flex items-center gap-2 border border-gray-300 rounded-md p-2 dark:border-gray-700">
@@ -126,22 +129,21 @@ const RegisterPage: React.FC = () => {
                 className="text-gray-500 dark:text-gray-400"
               />
               <Input
-                name="lastName"
+                ref={lastNameRef}
                 placeholder="Enter last name..."
-                value={lastName}
-                onChange={handleInputChange(setLastName)}
                 className="flex-1 p-3 bg-transparent border-none dark:bg-gray-700 dark:text-white"
-                required
               />
             </div>
             <Button
               type="submit"
               className="py-3 mt-4 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300"
             >
+
               Register
             </Button>
           </form>
         </CardContent>
+
         <CardFooter className="text-center mt-6">
           <p className="text-xs text-gray-600 dark:text-gray-400">
             Already have an account?{" "}
@@ -149,13 +151,17 @@ const RegisterPage: React.FC = () => {
               className="underline font-bold text-blue-600 dark:text-blue-400"
               to="/auth/login"
             >
+
               Login
             </Link>
           </p>
         </CardFooter>
       </Card>
+
     </motion.div>
+
+
   );
-};
+}
 
 export default RegisterPage;

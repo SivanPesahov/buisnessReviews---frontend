@@ -1,86 +1,98 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
-import { formatJWTTokenToUser } from "../utils/formatJWTTokenToUser";
-import api from "../services/api.service";
-import { useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
+import api from "@/services/api.service";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import React, { createContext, useState, useEffect, useContext } from "react";
 
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
+export interface User {
+  username: String;
+  email: String;
+  password: String;
+  firstName: String;
+  lastName: String;
 }
 
-interface UserContextType {
-  user: User | null | undefined;
-  login: (userInfo: User) => void;
+type loggedInUserStateType = User | null | undefined;
+
+interface AuthContextType {
+  loggedInUser: loggedInUserStateType;
+  login: (user: { username: string; password: string }) => Promise<void>;
   logout: () => void;
+  register: (userData: User) => Promise<void>;
   fetchUser: () => Promise<void>;
 }
 
-const UserContext = createContext<UserContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-interface UserProviderProps {
-  children: ReactNode;
-}
-
-export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null | undefined>(undefined);
-  const navigate = useNavigate();
-
-  // Get token and userId
-  const token = localStorage.getItem("token");
-  const id = token ? formatJWTTokenToUser(token) : null;
-
-  const fetchUser = async () => {
-    if (!token || !id) {
-      return setUser(null);
-    }
-    try {
-      const response = await api.get<{ user: User }>(`/Auth/me${id}`);
-      setUser(response.data.user);
-    } catch (error) {
-      console.error("Failed to fetch user data", error);
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        // Token might be invalid or expired
-        logout();
-      }
-    }
-  };
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [loggedInUser, setLoggedInUser] =
+    useState<loggedInUserStateType>(undefined);
+  const [token, setToken] = useLocalStorage("token", null);
 
   useEffect(() => {
+    if (!token) {
+      setLoggedInUser(null);
+      return;
+    }
+
     fetchUser();
-  }, [id, token]);
+  }, [token]);
 
-  const login = (userInfo: User) => {
-    setUser(userInfo);
-    navigate("/task");
-  };
+  async function fetchUser() {
+    try {
+      const response = await api.get("/Auth/me");
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("token");
-    navigate("/");
-  };
+      setLoggedInUser(response.data);
+      console.log(loggedInUser);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        console.error("Invalid token, logging out");
+        logout();
+      } else if (error.response?.status === 404) {
+        console.error("User not found, logging out");
+        logout();
+      } else {
+        console.error("Error fetching user data:", error);
+      }
+    }
+  }
+
+  function logout() {
+    setToken(null);
+    setLoggedInUser(null);
+  }
+
+  async function login(userData: { username: string; password: string }) {
+    try {
+      const response = await api.post("/Auth/login", userData);
+      setToken(response.data.token);
+    } catch (error) {
+      console.error("Error logging in:", error);
+    }
+  }
+
+  async function register(userData: User) {
+    try {
+      const response = await api.post("/Auth/register", userData);
+      setToken(response.data.token);
+    } catch (error) {
+      console.error("Error registering:", error);
+    }
+  }
 
   return (
-    <UserContext.Provider value={{ user, login, logout, fetchUser }}>
+    <AuthContext.Provider
+      value={{ loggedInUser, login, register, logout, fetchUser }}
+    >
       {children}
-    </UserContext.Provider>
+    </AuthContext.Provider>
   );
 };
 
-export function useUserContext(): UserContextType {
-  const context = useContext(UserContext);
-  if (context === null) {
-    throw new Error("This context should be used only inside UserProvider");
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within a UserProvider");
   }
   return context;
 }
+
+export default AuthContext;

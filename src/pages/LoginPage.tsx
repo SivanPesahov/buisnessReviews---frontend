@@ -1,5 +1,9 @@
-import React, { useState } from "react";
+
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
+
+
+
 import {
   Card,
   CardContent,
@@ -11,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { useUserContext } from "../components/AuthProvider";
+import { SendHorizontal } from "lucide-react";
+import { useAuth } from "../components/AuthProvider";
 import api from "../services/api.service";
 import axios from "axios";
 import { Send } from "lucide-react";
@@ -38,44 +43,31 @@ interface LoginResponse {
 }
 
 function LoginPage() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const { login } = useUserContext();
+  const userNameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const userData = {
+      username: userNameRef.current!.value,
+      password: passwordRef.current!.value,
+    };
+
+
     try {
-      const response = await api.post<LoginResponse>("/Auth/login", {
-        email,
-        password,
-      });
-      const { token, user } = response.data;
-      localStorage.setItem("token", token);
-
-      // Providing default values for missing properties
-      const fullUser: User = {
-        ...user,
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        username: user.username || "",
-      };
-
-      login(fullUser);
-      navigate("/task");
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          "Login failed:",
-          error.response?.data?.message || error.message
-        );
-      } else {
-        console.error("An unexpected error occurred:", error);
-      }
+      await login(userData);
+      navigate("/businesses", { replace: true });
+    } catch (err) {
+      console.log("TypeError");
+      console.log(err);
     }
-  };
+  }
 
   return (
+
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
@@ -92,17 +84,15 @@ function LoginPage() {
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-2">
               <Label htmlFor="email" className="text-lg font-medium">
-                Email:
+                Username:
               </Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter email..."
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                ref={userNameRef}
+                
+                placeholder="Enter username..."
+          
                 className="p-3 border rounded-md dark:bg-gray-700 dark:text-white"
-                required
+                
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -110,14 +100,12 @@ function LoginPage() {
                 Password:
               </Label>
               <Input
-                id="password"
-                name="password"
-                type="password"
+               ref={passwordRef}
                 placeholder="Enter password..."
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+              
+               
                 className="p-3 border rounded-md dark:bg-gray-700 dark:text-white"
-                required
+
               />
             </div>
             <Button
@@ -141,6 +129,7 @@ function LoginPage() {
         </CardFooter>
       </Card>
     </motion.div>
+
   );
 }
 
