@@ -7,28 +7,26 @@ import NotFoundPage from "./pages/NotFoundPage";
 import MainLayout from "./components/MainLayout";
 import AuthLayout from "./components/AuthLayout";
 import LoginPage from "./pages/LoginPage";
+import { AuthProvider } from "./components/AuthProvider";
+import { Toaster } from "@/components/ui/toaster";
 
-import { Navigate } from "react-router-dom";
-import { ReactNode } from "react";
-import { AuthProvider, useAuth } from "./components/AuthProvider";
+// interface ProtectedRouteProps {
+//   children: ReactNode;
+// }
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-}
+// function ProtectedRoute({ children }: ProtectedRouteProps) {
+//   const { loggedInUser } = useAuth();
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { loggedInUser } = useAuth();
+//   if (loggedInUser === undefined) {
+//     return null;
+//   }
 
-  if (loggedInUser === undefined) {
-    return null;
-  }
+//   if (loggedInUser === null) {
+//     return <Navigate to="/auth/login" />;
+//   }
 
-  if (loggedInUser === null) {
-    return <Navigate to="/auth/login" />;
-  }
-
-  return children;
-}
+//   return children;
+// }
 
 function App() {
   return (
@@ -55,6 +53,7 @@ function App() {
           <Route path="*/" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
+      <Toaster />
     </>
   );
 }

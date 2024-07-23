@@ -47,11 +47,13 @@ function Header() {
         <nav className="hidden md:block">
           <ul className="flex gap-6">
             <li>
-              <Link
-                to="/businesses"
-                className="text-white hover:text-amber-300 transition-colors duration-200"
-              >
-                Businesses
+              <Link to="/businesses">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="text-white hover:text-amber-300 transition-colors duration-200"
+                >
+                  Find Biss
+                </motion.div>
               </Link>
             </li>
           </ul>
@@ -71,8 +73,10 @@ function Header() {
               <Avatar className="h-8 w-8 bg-purple-200 dark:bg-purple-700 ring-2 ring-white">
                 <AvatarImage alt={loggedInUser.username as string} />
                 <AvatarFallback className="text-purple-500 dark:text-purple-300">
-                  {loggedInUser.firstName && loggedInUser.firstName[0].toUpperCase()}
-                  {loggedInUser.lastName && loggedInUser.lastName[0].toUpperCase()}
+                  {loggedInUser.firstName &&
+                    loggedInUser.firstName[0].toUpperCase()}
+                  {loggedInUser.lastName &&
+                    loggedInUser.lastName[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
@@ -84,14 +88,14 @@ function Header() {
               <DropdownMenuItem>
                 <Link
                   to="/profile"
-                  className="text-white hover:text-amber-300 transition-colors duration-200"
+                  className=" hover:text-amber-300 transition-colors duration-200"
                 >
                   Profile
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={logout}
-                className="text-white hover:text-amber-300 transition-colors duration-200"
+                className="  transition-colors duration-200 cursor-pointer hover:text-amber-300"
               >
                 Logout
               </DropdownMenuItem>
@@ -111,7 +115,6 @@ function Header() {
         <button onClick={toggleMenu} className="text-white">
           {menuOpen ? (
             <X className="text-2xl" />
-
           ) : (
             <Menu className="text-2xl" />
           )}

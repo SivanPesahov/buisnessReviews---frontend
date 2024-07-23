@@ -3,11 +3,11 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import React, { createContext, useState, useEffect, useContext } from "react";
 
 export interface User {
-  username: String;
-  email: String;
-  password: String;
-  firstName: String;
-  lastName: String;
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
   _id?: string;
 }
 
