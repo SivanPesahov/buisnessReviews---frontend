@@ -1,4 +1,3 @@
-import { Heart, Pencil, Star, Trash2 } from "lucide-react";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -31,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Heart, Pencil, Star, Trash2 } from "lucide-react";
 
 interface IReview {
   stars: number;
@@ -65,6 +65,7 @@ function BusinessesDetailsPage() {
   const editMessage = useRef<HTMLTextAreaElement>(null);
   const { loggedInUser } = useAuth();
   const { toast } = useToast();
+  const eventListenersAdded = useRef(false); // Ref to track event listeners
 
   const sortReviews = useCallback(
     (reviewsToSort: IReview[]) => {
@@ -98,35 +99,39 @@ function BusinessesDetailsPage() {
 
     getBusinessAndReviews();
 
-    socket.on("reviewCreated", (review) =>
-      setReviews((prev) => [...prev, review])
-    );
-    socket.on("reviewDeleted", (reviewId) => {
-      console.log("delete front");
+    if (!eventListenersAdded.current) {
+      socket.on("reviewCreated", (review) =>
+        setReviews((prev) => [...prev, review])
+      );
+      socket.on("reviewDeleted", (reviewId) => {
+        console.log("delete front");
 
-      setReviews((prev) => prev.filter((review) => review._id !== reviewId));
-    });
-    socket.on("reviewEdited", (updatedReview) => {
-      setReviews((prev) =>
-        prev.map((review) =>
-          review._id === updatedReview._id ? updatedReview : review
-        )
-      );
-    });
-    socket.on("reviewLiked", (updatedReview) => {
-      setReviews((prev) =>
-        prev.map((review) =>
-          review._id === updatedReview._id ? updatedReview : review
-        )
-      );
-    });
-    socket.on("reviewUnLiked", (updatedReview) => {
-      setReviews((prev) =>
-        prev.map((review) =>
-          review._id === updatedReview._id ? updatedReview : review
-        )
-      );
-    });
+        setReviews((prev) => prev.filter((review) => review._id !== reviewId));
+      });
+      socket.on("reviewEdited", (updatedReview) => {
+        setReviews((prev) =>
+          prev.map((review) =>
+            review._id === updatedReview._id ? updatedReview : review
+          )
+        );
+      });
+      socket.on("reviewLiked", (updatedReview) => {
+        setReviews((prev) =>
+          prev.map((review) =>
+            review._id === updatedReview._id ? updatedReview : review
+          )
+        );
+      });
+      socket.on("reviewUnLiked", (updatedReview) => {
+        setReviews((prev) =>
+          prev.map((review) =>
+            review._id === updatedReview._id ? updatedReview : review
+          )
+        );
+      });
+
+      eventListenersAdded.current = true;
+    }
 
     return () => {
       socket.off("reviewCreated");
@@ -206,8 +211,8 @@ function BusinessesDetailsPage() {
             )
           );
           toast({
-            title: "You liked this review",
-            description: "Review liked",
+            title: "You disliked this review",
+            description: "Review disliked",
             variant: "success",
           });
         } else {
@@ -218,8 +223,8 @@ function BusinessesDetailsPage() {
             )
           );
           toast({
-            title: "You disliked this review",
-            description: "Review disliked",
+            title: "You liked this review",
+            description: "Review liked",
             variant: "success",
           });
         }
@@ -274,36 +279,42 @@ function BusinessesDetailsPage() {
           description: "updated Review succsesfully",
           variant: "success",
         });
-        setReviews((prevReviews) =>
-          sortReviews(
-            prevReviews.map((review) =>
-              review._id === id ? updatedReview.data : review
-            )
-          )
-        );
-        setIsEditDialogOpen(false); // Close the dialog
-        setEditingReview(null); // Reset editing review
-        setEditSelectedStars(0);
-      } catch (error: any) {
+        setIsEditDialogOpen(false);
+      } catch (error) {
         toast({
           title: "Failed to update review!",
-          description: "updated failed!",
+          description: "update failed!",
           variant: "destructive",
         });
-        console.log(error.message);
-        if (!editMessage.current?.value) alert("Please enter content");
-        if (editSelectedStars === 0) alert("Please enter a rating");
+        console.log("Error updating review:", error);
       }
     },
-    [editSelectedStars, sortReviews]
+    [editSelectedStars]
   );
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
-  if (error)
-    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
-  if (!business)
-    return <div className="text-center py-10">Business not found</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
+
+  if (!business) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>No business found</p>
+      </div>
+    );
+  }
   const averageStars =
     business.stars.reduce((acc, cur) => acc + cur, 0) / business.stars.length;
 
