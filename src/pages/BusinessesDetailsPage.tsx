@@ -1,9 +1,10 @@
 import { Heart, Pencil, Star, Trash2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/AuthProvider";
 
 import {
   Card,
@@ -13,9 +14,18 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/services/api.service";
+import { User } from "../components/AuthProvider";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface IReviews {
-
   stars: number;
   _id: string;
   content: string;
@@ -29,32 +39,29 @@ interface IBusiness {
   name: string;
   description: string;
   stars: number[];
-  imageUrl: string; // Make sure to add this property if it's available in your API
+  imageUrl: string;
 }
 
 function BusinessesDetailsPage() {
   const { businessesId } = useParams<{ businessesId: string }>();
   const [business, setBusiness] = useState<IBusiness | null>(null);
-
-
-  const [hoveredStars, setHoveredStars] = useState<number>(0);
-  const [selectedStars, setSelectedStars] = useState<number>(0);
-  const [message, setMessage] = useState<string>("");
   const [reviews, setReviews] = useState<IReviews[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const userId = "669e057f20ab374aca10b4f5";
-
+  const [hoveredStars, setHoveredStars] = useState<number>(0);
+  const [selectedStars, setSelectedStars] = useState<number>(0);
+  const [editSelectedStars, setEditSelectedStars] = useState<number>(0);
+  const [message, setMessage] = useState<string>("");
+  const editMessage = useRef<HTMLTextAreaElement>(null);
+  const { loggedInUser } = useAuth();
 
   useEffect(() => {
     async function getBusinessAndReviews() {
       try {
-
         const [businessResponse, reviewsResponse] = await Promise.all([
           api.get(`/Business/${businessesId}`),
           api.get(`/Reviews/${businessesId}`),
         ]);
-
 
         setBusiness(businessResponse.data);
         setReviews(reviewsResponse.data);
@@ -64,16 +71,13 @@ function BusinessesDetailsPage() {
         setLoading(false);
       }
     }
+
     getBusinessAndReviews();
-  }, [businessesId]);
+  }, [businessesId, reviews]);
 
-
-  if (loading) return <div className="text-center py-10">Loading...</div>;
-  if (error)
-    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
-  if (!business)
-    return <div className="text-center py-10">Business not found</div>;
-
+  function returnIfLiked(review: IReviews) {
+    console.log(review.likes.includes(loggedInUser?._id as string));
+  }
 
   const handleMouseEnter = (index: number) => {
     setHoveredStars(index + 1);
@@ -87,43 +91,111 @@ function BusinessesDetailsPage() {
     setSelectedStars(index + 1);
   };
 
-  const handleMessageChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleClickEditStars = (index: number) => {
+    setEditSelectedStars(index + 1);
+  };
+
+  const handleMessageChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     setMessage(event.target.value);
   };
 
   const handleSubmit = async () => {
-    console.log(message);
-    console.log(selectedStars);
-    
     try {
-      await api.post("/Reviews", {
+      await api.post("/Reviews/create", {
         content: message,
-        stars: selectedStars,
         business: businessesId,
-        user: userId,
+        stars: selectedStars,
       });
+      // Clear the form
+      setMessage("");
+      setSelectedStars(0);
     } catch (error) {
       console.error("Error submitting review:", error);
     }
   };
-  function handleLike(review:IReviews, userId: string) {
-   console.log(review.likes.includes(userId)?'dislike' : 'like');
-  }
-  function handleDelete(id:string) {
-    // delete by id
-  }
-  function handleEdit(review:IReviews) {
-    // edit review
-  }
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const handleLike = useCallback(
+    async (review: IReviews, loggedInUser: User) => {
+      const userId = loggedInUser._id as string;
+      const hasLiked = review.likes.includes(userId);
 
+      try {
+        if (hasLiked) {
+          await api.patch(`/Reviews/unLike/${review._id}`);
+          setReviews((prevReviews) =>
+            prevReviews.map((r) =>
+              r._id === review._id
+                ? { ...r, likes: r.likes.filter((like) => like !== userId) }
+                : r
+            )
+          );
+        } else {
+          await api.patch(`/Reviews/like/${review._id}`);
+          setReviews((prevReviews) =>
+            prevReviews.map((r) =>
+              r._id === review._id ? { ...r, likes: [...r.likes, userId] } : r
+            )
+          );
+        }
+      } catch (error: any) {
+        console.error("Error handling like:", error.message);
+      }
+    },
+    []
+  );
 
-  const averageStars = business!.stars.reduce((acc, cur) => acc + cur, 0) / business!.stars.length;
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await api.delete(`/Reviews/${id}`);
+      setReviews((prevReviews) =>
+        prevReviews.filter((review) => review._id !== id)
+      );
+    } catch (error: any) {
+      console.log(error.message);
+    }
+  }, []);
+
+  const handleEdit = useCallback(
+    async (id: string) => {
+      try {
+        await api.patch(`/Reviews/${id}`, {
+          content: editMessage.current?.value,
+          stars: editSelectedStars,
+        });
+        setReviews((prevReviews) =>
+          prevReviews.map((review) =>
+            review._id === id
+              ? {
+                  ...review,
+                  content: editMessage.current?.value || review.content,
+                  stars: editSelectedStars,
+                }
+              : review
+          )
+        );
+        editMessage.current!.value = "";
+        setEditSelectedStars(0);
+      } catch (error: any) {
+        console.log(error.message);
+        if (!editMessage.current?.value) alert("Please enter content");
+        if (editSelectedStars === 0) alert("Please enter a rating");
+      }
+    },
+    [editSelectedStars]
+  );
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (error)
+    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
+  if (!business)
+    return <div className="text-center py-10">Business not found</div>;
+
+  const averageStars =
+    business!.stars.reduce((acc, cur) => acc + cur, 0) / business!.stars.length;
 
   return (
-
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -150,38 +222,42 @@ function BusinessesDetailsPage() {
               key={index}
               size={20}
               color="grey"
-              fill={index < averageStars ? 'yellow' : ''}
+              fill={index < averageStars ? "yellow" : ""}
             />
           ))}
         </div>
       </motion.div>
-      
-      <Card className="w-[350px]">
-        <CardHeader>
-          <div className="flex items-center space-x-1">
-            {Array.from({ length: 5 }, (_, index) => (
-              <Star
-                key={index}
-                size={20}
-                color="black"
-                fill={index < (hoveredStars || selectedStars) ? "black" : "white"}
-                onMouseEnter={() => handleMouseEnter(index)}
-                onMouseLeave={handleMouseLeave}
-                onClick={() => handleClick(index)}
-                style={{ cursor: "pointer" }}
-              />
-            ))}
+
+      {loggedInUser ? (
+        <Card className="w-[350px]">
+          <CardHeader>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: 5 }, (_, index) => (
+                <Star
+                  key={index}
+                  size={20}
+                  color="black"
+                  fill={
+                    index < (hoveredStars || selectedStars) ? "black" : "white"
+                  }
+                  onMouseEnter={() => handleMouseEnter(index)}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleClick(index)}
+                  style={{ cursor: "pointer" }}
+                />
+              ))}
+            </div>
+          </CardHeader>
+          <div className="grid w-full gap-2">
+            <Textarea
+              placeholder="Type your message here."
+              value={message}
+              onChange={handleMessageChange}
+            />
+            <Button onClick={handleSubmit}>Send message</Button>
           </div>
-        </CardHeader>
-        <div className="grid w-full gap-2">
-          <Textarea
-            placeholder="Type your message here."
-            value={message}
-            onChange={handleMessageChange}
-          />
-          <Button onClick={handleSubmit}>Send message</Button>
-        </div>
-      </Card>
+        </Card>
+      ) : null}
 
       <motion.h2
         initial={{ opacity: 0 }}
@@ -227,22 +303,70 @@ function BusinessesDetailsPage() {
                   <Heart
                     size={16}
                     className={
-                      review.likes.includes(userId)
+                      review.likes.includes(loggedInUser!._id as string)
                         ? "text-red-500 fill-current"
-                        : "text-gray-400"}
-                    onClick={()=>handleLike(review,userId)}
-                />
-                {review.user==userId?<><Pencil onClick={()=>handleEdit(review)} /> <Trash2 onClick={()=>handleDelete(review._id)}/></>:<></>}
+                        : "text-gray-400"
+                    }
+                    onClick={() => handleLike(review, loggedInUser as User)}
+                  />
+                  {review.user === loggedInUser?._id ? (
+                    <>
+                      <Trash2 onClick={() => handleDelete(review._id)} />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost">
+                            <Pencil />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit your review here</DialogTitle>
+                          </DialogHeader>
+                          <DialogDescription></DialogDescription>
+
+                          <Card>
+                            <CardHeader>
+                              <div className="flex items-center space-x-1">
+                                {Array.from({ length: 5 }, (_, index) => (
+                                  <Star
+                                    key={index}
+                                    size={20}
+                                    color="black"
+                                    fill={
+                                      index <
+                                      (hoveredStars || editSelectedStars)
+                                        ? "black"
+                                        : "white"
+                                    }
+                                    onMouseEnter={() => handleMouseEnter(index)}
+                                    onMouseLeave={handleMouseLeave}
+                                    onClick={() => handleClickEditStars(index)}
+                                    style={{ cursor: "pointer" }}
+                                  />
+                                ))}
+                              </div>
+                            </CardHeader>
+                            <div className="grid w-full gap-2">
+                              <Textarea
+                                placeholder="Type here."
+                                ref={editMessage}
+                              />
+                            </div>
+                          </Card>
+                          <Button onClick={() => handleEdit(review._id)}>
+                            Save changes
+                          </Button>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  ) : null}
                 </div>
               </CardFooter>
             </Card>
           </motion.div>
         ))}
       </div>
-
-    
     </motion.div>
-
   );
 }
 

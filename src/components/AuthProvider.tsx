@@ -8,7 +8,10 @@ export interface User {
   password: String;
   firstName: String;
   lastName: String;
+  _id?: string;
 }
+
+export interface UserWithId extends User {}
 
 type loggedInUserStateType = User | null | undefined;
 
