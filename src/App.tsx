@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
+import {MapPage} from "./pages/Maps";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -37,6 +38,7 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="Maps" element={<MapPage />} />
             <Route path="businesses" element={<BusinessesPage />} />
 
             <Route

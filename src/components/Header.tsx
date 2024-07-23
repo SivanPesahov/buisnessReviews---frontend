@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +15,7 @@ import { BriefcaseBusinessIcon, Menu, X } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 // import { useUserContext } from "./AuthProvider";
 import { useAuth } from "../components/AuthProvider";
+import { useState } from "react";
 function Header() {
   const { loggedInUser, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -52,6 +52,14 @@ function Header() {
                 className="text-white hover:text-amber-300 transition-colors duration-200"
               >
                 Businesses
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/MapPage"
+                className="text-white hover:text-amber-300 transition-colors duration-200"
+              >
+                Map
               </Link>
             </li>
           </ul>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useContext, useEffect, useRef } from "react";
+import {  useEffect, useRef } from "react";
 
 
 import {
@@ -10,14 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 
 import { CircleFadingPlus, User, Mail, Lock, UserPlus } from "lucide-react";
-import api from "../services/api.service"; // Import your API service
-
-import { LogIn } from "lucide-react";
 import { useAuth } from "../components/AuthProvider";
 
 
